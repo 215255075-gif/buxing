@@ -1,0 +1,13 @@
+# 本机配置，可能含 API key，永远不要提交
+config.js
+
+# 本地验收工具（对着我自己的口味，不适合公开）
+review.html
+
+# 系统噪音
+.DS_Store
+.Rhistory
+
+# 编辑器
+.vscode/
+.idea/

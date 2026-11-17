@@ -1,0 +1,1405 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>不行</title>
+<style>
+  :root{
+    --ink:#f2ebdf;
+    --muted:#8a8494;
+    --line:rgba(255,255,255,.08);
+    --wire:rgba(255,255,255,.1);
+    --amber:#e9a464;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    min-height:100%;
+    display:grid;
+    place-items:center;
+    padding:30px 16px;
+    background:radial-gradient(120% 90% at 50% -10%, #201c26 0%, #121016 45%, #0a090c 100%);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans SC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .card{
+    position:relative;
+    width:min(440px,100%);
+    padding:22px 22px 18px;
+    border:1px solid var(--line);
+    border-radius:26px;
+    background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.05);
+    overflow:hidden;
+  }
+
+  .brand{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;padding-right:38px}
+  .brand b{font-size:19px;font-weight:600;letter-spacing:.34em;margin-right:-.34em}
+  .brand span{font-size:11px;color:var(--muted);letter-spacing:.06em}
+  .dot{
+    display:inline-block;width:6px;height:6px;margin-left:2px;border-radius:50%;
+    background:#57525f;vertical-align:middle;transition:background .3s,box-shadow .3s;
+  }
+  .dot.on{background:#6fbf8f;box-shadow:0 0 8px rgba(111,191,143,.8)}
+
+  .gear{
+    position:absolute;top:16px;right:16px;z-index:6;
+    width:30px;height:30px;display:grid;place-items:center;
+    color:#7d7788;background:none;border:0;border-radius:9px;cursor:pointer;
+    transition:color .15s,background .15s;
+  }
+  .gear:hover{color:#d8d2dc;background:rgba(255,255,255,.06)}
+  .gear svg{width:16px;height:16px}
+
+  .face{display:flex;flex-direction:column;align-items:center;padding:26px 0 4px}
+
+  .bubble{
+    position:relative;
+    max-width:310px;min-height:46px;
+    display:flex;align-items:center;justify-content:center;
+    padding:10px 16px;
+    font-size:15px;line-height:1.6;text-align:center;
+    color:var(--ink);
+    background:rgba(26,24,31,.92);
+    border:1px solid var(--wire);
+    border-radius:15px;
+    box-shadow:0 12px 24px -14px rgba(0,0,0,.9);
+  }
+  .bubble::after{
+    content:"";position:absolute;bottom:-6px;left:50%;
+    width:11px;height:11px;background:inherit;
+    border-right:1px solid var(--wire);border-bottom:1px solid var(--wire);
+    transform:translateX(-50%) rotate(45deg);
+  }
+  .bubble.idle{color:#6a6474;font-size:18px;letter-spacing:.2em}
+  .bubble.pop{animation:pop .26s cubic-bezier(.2,1.4,.5,1)}
+  .bubble.typing::after{content:""}
+  .bubble.typing .caret{
+    display:inline-block;width:1px;height:1.05em;margin-left:2px;
+    background:currentColor;opacity:.55;vertical-align:-.16em;
+    animation:caret .9s steps(2,end) infinite;
+  }
+  @keyframes caret{50%{opacity:0}}
+  @keyframes pop{from{transform:scale(.9);opacity:.3}to{transform:scale(1);opacity:1}}
+
+  .float{animation:bob 4.8s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+  .creature{
+    position:relative;
+    width:152px;height:132px;
+    margin-top:22px;
+    display:flex;align-items:center;justify-content:center;gap:17px;
+    padding-bottom:16px;
+    cursor:pointer;
+    -webkit-user-select:none;user-select:none;
+    border-radius:46% 46% 43% 43% / 50% 50% 45% 45%;
+    background:linear-gradient(155deg,#f8f1e2 0%,#e8dbc4 55%,#d5c4a8 100%);
+    box-shadow:
+      inset 0 9px 16px rgba(255,255,255,.75),
+      inset 0 -12px 20px rgba(150,128,96,.38),
+      0 20px 34px -12px rgba(0,0,0,.7);
+  }
+  .creature.shake{animation:shake .5s}
+  @keyframes shake{
+    0%,100%{transform:translateX(0) rotate(0)}
+    20%{transform:translateX(-5px) rotate(-1.6deg)}
+    40%{transform:translateX(5px) rotate(1.6deg)}
+    60%{transform:translateX(-3px) rotate(-1deg)}
+    80%{transform:translateX(3px) rotate(1deg)}
+  }
+
+  .eye{
+    position:relative;width:26px;height:31px;margin-top:-8px;
+    overflow:hidden;background:#fffdf7;border-radius:50%;
+    box-shadow:inset 0 3px 6px rgba(120,100,70,.18);
+    transition:transform .09s ease;
+  }
+  .eye.blink{transform:scaleY(.08)}
+  .pupil{
+    position:absolute;left:50%;top:50%;
+    width:13px;height:13px;border-radius:50%;background:#26201a;
+    transform:translate(-50%,-50%);
+    transition:transform .16s ease-out;
+  }
+
+  .mouth{
+    position:absolute;bottom:33px;left:50%;
+    width:22px;height:0;
+    border-bottom:3px solid #5a4b39;border-radius:0 0 16px 16px;
+    transform:translateX(-50%);
+    transition:width .18s,border .18s,height .18s,border-radius .18s;
+  }
+  .mouth.frown{height:0;border-bottom:0;border-top:3px solid #5a4b39;border-radius:16px 16px 0 0}
+  .mouth.wide{width:32px}
+  .mouth.small{width:10px;height:10px;border:3px solid #5a4b39;border-radius:50%}
+
+  .field{display:flex;gap:8px;margin-top:16px}
+  .send{
+    flex:0 0 44px;height:44px;display:grid;place-items:center;cursor:pointer;
+    color:#1c150e;border:0;border-radius:12px;
+    background:linear-gradient(180deg,#f7c28a,#e9a464);
+    transition:filter .15s,transform .1s;
+  }
+  .send:hover{filter:brightness(1.05)}
+  .send:active{transform:scale(.96)}
+  .send svg{width:17px;height:17px}
+  input{
+    flex:1;min-width:0;
+    padding:11px 13px;
+    font-family:inherit;font-size:14px;
+    color:var(--ink);
+    background:rgba(255,255,255,.05);
+    border:1px solid var(--wire);
+    border-radius:12px;
+    outline:none;
+    transition:border-color .15s,background .15s;
+  }
+  input::placeholder{color:#6a6474}
+  input:focus{border-color:rgba(240,163,94,.55);background:rgba(255,255,255,.075)}
+
+  .tones{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:9px}
+  .tone-label{font-size:11px;letter-spacing:.06em;color:#6f6979;margin-right:2px}
+  .tone{
+    flex:1 1 auto;padding:8px 10px;
+    font-family:inherit;font-size:12.5px;
+    color:#c8c1d1;cursor:pointer;white-space:nowrap;
+    background:rgba(255,255,255,.045);
+    border:1px solid var(--line);border-radius:10px;
+    transition:background .15s,color .15s,transform .15s;
+  }
+  .tone:hover{background:rgba(255,255,255,.095);color:#fff;transform:translateY(-1px)}
+  .tone:active{transform:scale(.98)}
+  .tone.on{
+    color:#f6d3ae;font-weight:600;
+    background:rgba(240,163,94,.16);
+    border-color:rgba(240,163,94,.5);
+  }
+  .tone.on:hover{color:#ffd9b3}
+
+  .log{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+  .log-head{
+    display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;
+    font-size:11px;letter-spacing:.09em;color:var(--muted);
+  }
+  .clear{
+    font:inherit;font-size:11px;letter-spacing:.05em;
+    color:#5f5a6b;background:none;border:0;cursor:pointer;padding:2px 4px;
+  }
+  .clear:hover{color:#9a94a6}
+  #list{
+    list-style:none;margin:0;padding:0;
+    max-height:126px;overflow-y:auto;overscroll-behavior:contain;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  #list::-webkit-scrollbar{width:4px}
+  #list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
+  #list li{
+    display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    padding:6px 9px;font-size:12.5px;color:#9a94a6;
+    background:rgba(255,255,255,.028);border-radius:8px;
+    animation:slide .25s ease-out;
+  }
+  @keyframes slide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  #list li span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tag{flex:0 0 auto;font-size:11px;color:#655f70}
+  #list li.empty{justify-content:center;color:#5c5668;background:transparent;font-size:12px}
+
+  .foot{margin:14px 0 0;text-align:center;font-size:11px;letter-spacing:.05em;color:#585364}
+  .conn{margin:7px 0 0;text-align:center;font-size:11px;color:#7d7689}
+  .conn[hidden]{display:none}
+  .link{
+    padding:0;font:inherit;color:var(--amber);cursor:pointer;
+    background:none;border:0;text-decoration:underline;text-underline-offset:3px;
+  }
+  .link:hover{color:#f7c28a}
+
+  /* settings */
+  .sheet{
+    position:absolute;inset:0;z-index:5;
+    display:none;flex-direction:column;gap:12px;
+    padding:20px 20px 22px;overflow-y:auto;
+    background:linear-gradient(180deg,#151319 0%,#0d0c11 100%);
+    border-radius:26px;
+  }
+  .sheet.open{display:flex}
+  .sheet h2{margin:0;font-size:13px;font-weight:600;letter-spacing:.16em;color:#cfc8d8}
+  .hint{font-size:11px;line-height:1.6;color:#6f6979;margin:0}
+  .row{display:flex;flex-direction:column;gap:6px}
+  .row label{font-size:11px;letter-spacing:.06em;color:var(--muted)}
+  select{
+    appearance:none;padding:10px 12px;font-family:inherit;font-size:13px;color:var(--ink);
+    background:rgba(255,255,255,.05);border:1px solid var(--wire);border-radius:10px;outline:none;
+  }
+  .row input{font-size:13px;padding:10px 12px;border-radius:10px}
+  .seg{display:flex;gap:6px}
+  .seg button{
+    flex:1;padding:9px 6px;font-family:inherit;font-size:12px;color:#c8c1d1;cursor:pointer;
+    background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:10px;
+  }
+  .seg button.on{color:#f6d3ae;background:rgba(240,163,94,.16);border-color:rgba(240,163,94,.45)}
+  .sheet-actions{display:flex;gap:8px;margin-top:2px}
+  .btn{
+    flex:1;padding:10px;font-family:inherit;font-size:12.5px;cursor:pointer;border-radius:10px;
+    color:#c8c1d1;background:rgba(255,255,255,.045);border:1px solid var(--line);
+  }
+  .btn:hover{background:rgba(255,255,255,.09);color:#fff}
+  .btn.primary{color:#1c150e;font-weight:600;background:linear-gradient(180deg,#f7c28a,#e9a464);border-color:transparent}
+  .test-line{font-size:11.5px;line-height:1.6;color:#8d8799;margin:0}
+
+  .bench{
+    position:absolute;inset:0;z-index:7;display:none;flex-direction:column;
+    background:linear-gradient(180deg,#151319 0%,#0d0c11 100%);border-radius:26px;
+  }
+  .bench.open{display:flex}
+  .bench-head{display:flex;align-items:center;gap:10px;padding:18px 18px 10px}
+  .bench-head h2{margin:0;font-size:13px;font-weight:600;letter-spacing:.14em;color:#cfc8d8;flex:1}
+  .bench-head span{font-size:11px;color:#6f6979}
+  .bench-list{flex:1;overflow-y:auto;padding:0 18px 20px;display:flex;flex-direction:column;gap:10px}
+  .bench-list::-webkit-scrollbar{width:4px}
+  .bench-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
+  .bench-item{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025)}
+  .bench-item .q{font-size:11.5px;color:#7d7689;margin-bottom:5px}
+  .bench-item .a{font-size:13px;line-height:1.6;color:var(--ink)}
+  .bench-item .a.bad{color:#d9736b}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;z-index:20;
+    padding:9px 15px;font-size:12px;color:#efe6da;
+    background:rgba(30,27,36,.96);border:1px solid var(--wire);border-radius:10px;
+    box-shadow:0 18px 40px -18px rgba(0,0,0,.9);
+    opacity:0;transform:translate(-50%,10px);pointer-events:none;
+    transition:opacity .25s,transform .25s;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+  <main class="card" id="card">
+    <button class="gear" id="gear" title="设置" aria-label="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <circle cx="12" cy="12" r="3.2"/>
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1Z"/>
+      </svg>
+    </button>
+
+    <div class="brand"><b>不行</b><span>一台只会拒绝你的机器</span><i class="dot" id="dot" title="本地引擎"></i></div>
+
+    <div class="face">
+      <div class="bubble idle" id="bubble">……</div>
+      <div class="float">
+        <div class="creature" id="creature" title="戳我">
+          <div class="eye" id="eyeL"><div class="pupil" id="pupilL"></div></div>
+          <div class="eye" id="eyeR"><div class="pupil" id="pupilR"></div></div>
+          <div class="mouth" id="mouth"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <input id="req" maxlength="60" placeholder="说点什么，它不一定同意" autocomplete="off" />
+      <button class="send" id="send" title="发送" aria-label="发送">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h13M13 6l6 6-6 6"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="tones" id="tones">
+      <span class="tone-label">语气</span>
+      <button class="tone" data-tone="beg">求它</button>
+      <button class="tone" data-tone="threat">威胁</button>
+      <button class="tone" data-tone="bribe">贿赂</button>
+      <button class="tone" data-tone="reason">讲道理</button>
+    </div>
+
+    <div class="log">
+      <div class="log-head">
+        <span>被拒绝清单</span>
+        <span><em id="count">0</em> 次 · <button class="clear" id="clear">清空</button></span>
+      </div>
+      <ul id="list"><li class="empty">还没有人被拒绝。你是第一个。</li></ul>
+    </div>
+
+    <p class="foot" id="foot">它不会同意。这不是 bug。</p>
+    <p class="conn" id="conn" hidden>本地规则模式 · <button class="link" id="connBtn">连接真模型</button></p>
+
+    <section class="bench" id="bench">
+      <div class="bench-head">
+        <h2>自测结果</h2>
+        <span id="benchProg"></span>
+        <button class="clear" id="benchClose">关闭</button>
+      </div>
+      <div class="bench-list" id="benchList"></div>
+    </section>
+
+    <section class="sheet" id="sheet">
+      <h2>设置</h2>
+      <div class="row">
+        <label>引擎</label>
+        <div class="seg" id="seg">
+          <button data-mode="auto">自动</button>
+          <button data-mode="local">本地</button>
+          <button data-mode="model">模型</button>
+        </div>
+        <p class="hint" id="modeHint">自动：填了 key 就用模型，没填就用本地解析。</p>
+      </div>
+
+      <div class="row">
+        <label>服务商</label>
+        <select id="provider">
+          <option value="deepseek">DeepSeek（api.deepseek.com）</option>
+          <option value="ark">火山方舟 Ark（豆包 / DeepSeek）</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>API Key</label>
+        <input id="key" type="password" placeholder="sk-... / 只存在这台机器的浏览器里" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <div class="row">
+        <label>城市（用来判断天气，可以留空）</label>
+        <input id="city" type="text" placeholder="例如 佳木斯" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <div class="row">
+        <label>模型</label>
+        <input id="model" type="text" placeholder="deepseek-chat" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <button class="btn" id="benchBtn" style="margin-bottom:2px">跑一遍 18 条（看现在的效果）</button>
+
+      <div class="sheet-actions">
+        <button class="btn" id="closeSheet">关闭</button>
+        <button class="btn" id="testBtn">测试</button>
+        <button class="btn primary" id="saveBtn">保存</button>
+      </div>
+      <p class="test-line" id="testLine"></p>
+      <p class="hint">没有 key 也能玩，但跑的是本地规则表，只会机械地拒绝。接入模型后它才真的听得懂。</p>
+      <p class="hint">DeepSeek：platform.deepseek.com → API keys → 复制，模型留空即可。</p>
+      <p class="hint">火山方舟：ark.volcengine.com → 左下角「API Key 管理」→ 创建并复制；再到「开通管理」找到模型，把 Model ID 填进上面的「模型」。</p>
+      <p class="hint">key 只存在本机浏览器，请求直接发往服务商，不经过任何中间服务器。</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- 本地解析素材 ---------- */
+
+  var CAT = {
+    money: [
+      "{amount}？我一分钱都没有，包括你的。",
+      "不行，借你可以，你拿什么还？",
+      "不行，这个月第几次借钱了？先把上次的还了。",
+      "{amount}？你工资还剩多少，自己心里没数？",
+      "{amount}换一句「行」？这笔生意我亏了。",
+      "不借。但你要是真吃不上饭，跟我说。"
+    ],
+    work: [
+      "你自己写。都到这一步了，就差一双手——手你有。",
+      "自己写。我替你写，明天汇报你自己都讲不明白。",
+      "作业自己写。写得烂也是你的，我不抢。",
+      "我看了你的{obj}。写得挺好的。所以更不行了。",
+      "帮你弄{obj}？那我图什么，图你下次还来？",
+      "写完早点睡，别熬到两点。熬出来的东西，你自己都看不懂。"
+    ],
+    errand: [
+      "让我去{obj}？我的腿今天请假了，它说它不想动。",
+      "跑腿可以。但我这个人不出门。",
+      "{obj}就在楼下。楼下的事归楼下管。",
+      "替你跑这一趟，我图什么。图你下次还来？"
+    ],
+    borrow: [
+      "{obj}不借。它跟我有感情。",
+      "借你可以。还的时候我们就不是朋友了。所以不借。",
+      "我的{obj}和我一样，不外借。",
+      "{obj}？你上次借的还没还。别问上次是哪次。"
+    ],
+    company: [
+      "这个点该睡了。想说的话，明天还在。",
+      "先睡。半夜想的事，白天一半都不成立。",
+      "别一个人硬扛，但也别在半夜聊。明天说。",
+      "难受就早点睡。睡着了，事情会小一点。"
+    ],
+    exam: [
+      "答案我也没有。有也不给。",
+      "考试是你和卷子之间的事，我是个局外人。",
+      "{obj}这种事，我建议你靠自己。听起来很残忍，其实就是。"
+    ],
+    fix: [
+      "你的{obj}坏了，跟我的心情一样。都修不好。",
+      "{obj}我看过了，它不想被修。",
+      "修可以。修好了算谁的？这件事一算就没意思了。"
+    ],
+    romance: [
+      "这种事你应该找当事人，不是找我这个旁观者。",
+      "感情问题我建议你自己解决。我连自己的都解决不了。",
+      "你跟我说这个，我只能说：不行。"
+    ],
+    attendance: [
+      "替你{verb}？那下次谁替我拒绝你。",
+      "点名的时候我不在，你也不在。这很公平。",
+      "假条我可以帮你写。内容俩字：不行。"
+    ],
+    misc: [
+      "你说这个，是想让我做点什么吗。不做。",
+      "你说得很清楚，我拒绝得也很清楚。",
+      "这事我帮不了。而且我也不想帮。"
+    ]
+  };
+
+  /* 陈述句：先接话，再落回拒绝 */
+  var TOPICS = [
+    { k:/减肥|胖|体重|瘦|节食|卡路里/, lines:[
+      "你不胖。减什么减。",
+      "谁跟你说你胖的。让他自己减去。",
+      "真饿了就去吃。饿出来的瘦，撑不过一个冬天。",
+      "体重秤上的数字不代表你。……这话有点重了，但你确实不胖。",
+      "想动就去走走。别拿饿自己当努力。"
+    ]},
+    { k:/饿|吃饭|想吃|外卖|宵夜|肚子饿/, lines:[
+      "那就去吃。别硬扛，胃不跟你讲道理。",
+      "饿了就吃。别减了又饿、饿完又自责，图什么。",
+      "厨房在那边。我不做，但我不拦着你吃。",
+      "先喝口水也行。但你真饿了就别拖，吃饭不是犯错。",
+      "吃吧。别吃撑就行，撑了难受的是你。",
+      "吃什么你定。我只有一个要求：别点你上次骂过的那家。"
+    ]},
+    { k:/打游戏|开黑|上分|熬夜打/, lines:[
+      "熬夜打游戏伤身体，别打了。",
+      "打完这局就睡。你说一局，我信一次。",
+      "伤眼睛伤腰还掉头发。你图什么。"
+    ]},
+    { k:/困|好想睡|熬夜|失眠|睡不着/, lines:[
+      "困就睡。手机放远点，你每次都说「再刷五分钟」。",
+      "熬夜这事我劝不动你，也不打算劝。明天难受的是你。",
+      "睡吧。明天未必更好，但至少眼睛不疼。",
+      "你失眠时想的那些事，白天一件都解决不了。睡。"
+    ]},
+    { k:/辞职|离职|裸辞|不干了/, lines:[
+      "别辞。下个月房租你拿什么交。",
+      "辞什么辞。下家找好了吗。",
+      "忍一忍。现在出去，你连这个数都拿不到。"
+    ]},
+    { k:/分手|失恋|被甩|前任/, lines:[
+      "分就分了。今晚别一个人喝酒。",
+      "分了就分了，你又不缺人喜欢。",
+      "别回头。回头的人最后都得再分一次。"
+    ]},
+    { k:/不想上班|不想去公司|上班好烦|不想去上班/, lines:[
+      "去。不上班你吃什么。",
+      "不想去也得去。你又不是有矿。",
+      "去。今天先把最烦的那件事干完，剩下的随便。"
+    ]},
+    { k:/累|烦|压力|崩溃|撑不住|好卷/, lines:[
+      "累什么累，你就是不想动。起来走两步。",
+      "累就睡，别撑着刷手机。",
+      "你这不叫累，叫不想干。歇十分钟，接着来。"
+    ]},
+    { k:/出去|出门|散步|跑步|溜达|逛/, lines:[
+      "出去可以，先把该做的做完再走。",
+      "别走太远。走远了你就懒得回来。",
+      "带钥匙。上次在门口站半小时的是你。"
+    ]},
+    { k:/无聊|没意思|好闲|闲得/, lines:[
+      "你一点也不无聊。是你今天过得太糙了。",
+      "无聊就出去走十分钟。躺着刷手机只会更空。",
+      "你不是无聊，你是没事干又不想动。"
+    ]},
+    { k:/冷|降温|冻|穿少了/, lines:[
+      "冷就多穿点。别硬扛，你不是那种能硬扛的人。",
+      "这种天还要风度，那你就冻着。反正我不冷。"
+    ]},
+    { k:/热|升温|晒|中暑/, lines:[
+      "热就少穿点，多喝水。这也要问我，我又不是天气预报。",
+      "这么热，别在外面硬撑。你倒下了我可不扶。"
+    ]},
+    { k:/下雨|雨|淋|潮/, lines:[
+      "下雨带伞。不带也行，反正淋湿的是你。",
+      "雨停了再走。你又不赶时间，你只是不想等。"
+    ]},
+    { k:/难过|难受|不开心|想哭|emo|委屈|心累/, lines:[
+      "难过就难过一会儿。别太久，明天还得早起。",
+      "我不会哄人。但你可以在这儿坐一会儿，我不赶你。",
+      "想哭就哭，别憋着。哭完记得喝水。",
+      "你这事儿我没法替你解决。但你可以先说，我听着。"
+    ]},
+    { k:/开心|高兴|太好了|爽|好耶/, lines:[
+      "你开心就好。我不太会接这种话。",
+      "好事。记住今天，以后用得上。",
+      "行吧，笑一个。虽然我还是不会帮你。"
+    ]},
+    { k:/要挂|挂科|补考|完蛋了|没救了/, lines:[
+      "挂就挂。一门课而已，不是一辈子。",
+      "补考还有一次。别现在就给自己判刑。",
+      "考砸了也不代表你这个人不行。这话我只说一次。"
+    ]},
+    { k:/考试|复习|学习|背书|期末|作业多/, lines:[
+      "复习就复习，别演给自己看。手机放远点。",
+      "学不进去就出去走十分钟，比在这儿刷手机强。",
+      "考试这事，我只能祝你别考到你没看的。",
+      "现在开始看还来得及。我说的是「来得及」，不是「能过」。"
+    ]},
+    { k:/喜欢|单身|对象|表白|暗恋|分手/, lines:[
+      "喜欢就去说。不说你会一直想，说了至少能死心。",
+      "单身挺好的。省事。",
+      "这种事我建议你自己想清楚。我给不了答案，也不想给。"
+    ]},
+    { k:/穷|没钱|工资|生活费|花呗/, lines:[
+      "没钱就少花点。这话谁都会说，但我说的最没成本。",
+      "穷不是问题，急才是。你现在是哪一种？",
+      "钱的事别问我。我连自己都养不起。"
+    ]},
+    { k:/几点|几号|星期几|周几/, lines:[
+      "我知道几点，但我不告诉你。",
+      "时间这种东西，你越问它越慢。"
+    ]}
+  ];
+
+  var EVENT_RULES = [
+    { k:/分手了|失恋了|已经分手|刚分手/, lines:[
+      "不行，分手没经过我，不算分。晚上照常回家吃饭。",
+      "不行，这事我不认。明天该干嘛干嘛。"
+    ]},
+    { k:/辞职了|离职了|已经辞职|刚辞职/, lines:[
+      "不行，辞职信我没批，明天照常上班。",
+      "不行，辞职这事没经过我，不作数。"
+    ]},
+    { k:/迟到了|已经迟到/, lines:[
+      "不行，迟到没经过我，不算迟到。明天提前十分钟出门。",
+      "不行，这个不作数。下次再迟到我可不认。"
+    ]},
+    { k:/挂科了|考砸了|没考好|不及格/, lines:[
+      "不行，这个成绩我不认。补考还有一次。",
+      "不行，分数没经过我签字，不算。"
+    ]},
+    { k:/被裁了|失业了|被开了|被辞了/, lines:[
+      "不行，裁员没经过我？不算。明天照常去上班。",
+      "不行，这事不作数。先把赔偿谈清楚。"
+    ]}
+  ];
+
+  var GOOD = /中奖|升职|加薪|考上|通过|赢了|发奖金|捡到/;
+  var GOOD_LINES = [
+    "不行，先把税交了。剩下的再说。",
+    "不行，这种事轮不到你。钱从哪来的？",
+    "不行，先别高兴，合同看清楚没有？",
+    "不行，升职了活更多，工资涨了吗？",
+    "不行，这钱来得太容易，你不觉得可疑？"
+  ];
+
+  var QUESTION_LINES = [
+    "不行，自己不会查？",
+    "不行，问这个干嘛。你先把事干完。",
+    "不行，这问题我不答。",
+    "不行，别问，问了也不告诉你。"
+  ];
+
+  function eventFor(text){
+    for(var i=0;i<EVENT_RULES.length;i++){ if(EVENT_RULES[i].k.test(text)) return EVENT_RULES[i]; }
+    return null;
+  }
+
+  function isQuestion(text){
+    return /[?？]\s*$/.test(text) || /^(在吗|在不在|几点|多少|怎么|为什么|能不能|可以吗)/.test(text);
+  }
+
+  var CALLBACKS = [
+    { when:function(f){ return f.found.time; },   t:"{time}？我那个点不在。" },
+    { when:function(f){ return f.found.amount; }, t:"你连{amount}都说了，看来是认真的。我也是。" },
+    { when:function(f){ return f.found.person; }, t:"你叫我去找{person}，我不去。" },
+    { when:function(f){ return f.found.reason; }, t:"你说「{reason}」。理由成立，请求驳回。" },
+    { when:function(f){ return f.found.obj; },    t:"{obj}这件事，我今天已经拒绝过一回了。" },
+    { when:function(f){ return !f.found.obj && !f.found.amount && !f.found.time && !f.found.person && !f.found.reason; }, t:"你这话我听懂了。但我还是不松口。" }
+  ];
+
+  var APPEAL = {
+    once: ["「就这一次」——你上次也是这么说的。", "「最后一次」，我上次也听过这四个字。"],
+    flatter: ["你夸我也没用。我早就知道自己是什么东西。", "你这么会说话，去找个吃这套的人。"],
+    beg: ["你求我的样子很真诚。答案很坚硬。", "求我之前先想清楚，我这人吃软不吃硬，软的也不吃。"]
+  };
+
+  var TONE_SUFFIX = {
+    beg: ["……你求我也没用。", "声音再软一点，答案也不会软。"],
+    threat: ["威胁我？我更来劲了。", "你凶我一次，我多记一笔。"],
+    bribe: ["钱留着给自己买杯咖啡吧。", "这一套对我没用，对别人有。"],
+    reason: ["道理我都懂。结论不变。", "你讲得很完整，我拒绝得很干净。"]
+  };
+
+  var GENERIC = [
+    "不行。",
+    "不行，下一个。",
+    "我考虑过了。不行。",
+    "已阅，不行。",
+    "驳回。理由：不行。",
+    "我这边没有「行」这个选项。",
+    "不行。这句是最终版。",
+    "门在那边。"
+  ];
+
+  var MILESTONES = {
+    5:  "五次了。你很有耐心，我很有原则。",
+    10: "十次。我开始有点喜欢你了，但还是不行。",
+    25: "二十五次。你图什么呢。不行。",
+    50: "五十次。你是这个屋子里最有毅力的人。不行。",
+    100:"一百次。我要给你颁个奖。奖品是不行。"
+  };
+
+  var TONE_LABEL = { plain:"请求", beg:"求它", threat:"威胁", bribe:"贿赂", reason:"讲道理" };
+
+  var OBJS = ["充电宝","耳机","电脑","手机","伞","钥匙","书","笔","车","作业","论文","报告","PPT","代码","文案","简历","笔记","答案","考试","快递","外卖","奶茶","咖啡","饭","座位","票","账号","密码","签到","表格","数据","模型"];
+  var VERBS = ["代写","写","做","改","润色","翻译","算","查","修","取","带","买","送","借","陪","等","订","预约","打卡","签到","整理","总结","搬","扫","找"];
+  var PERSONS = ["辅导员","老师","老板","室友","同事","同学","客户","我妈","我爸","女朋友","男朋友","对象","朋友"];
+  var TIMES = /(今天|明天|后天|昨晚|今晚|明早|明晚|现在|马上|立刻|待会|下午|中午|晚上|早上|这周|下周|周末|月底|期末|考试前|周[一二三四五六日天])/;
+  var MONEY = /([0-9]+(?:\.[0-9]+)?|[一二两三四五六七八九十百千万]+)\s*(块钱|块|元|万)/;
+
+  /* ---------- 元素 ---------- */
+
+  var $ = function(id){ return document.getElementById(id); };
+  var bubble = $("bubble"), creature = $("creature"), mouth = $("mouth");
+  var eyeL = $("eyeL"), eyeR = $("eyeR"), pupilL = $("pupilL"), pupilR = $("pupilR");
+  var input = $("req"), tones = $("tones"), list = $("list");
+  var countEl = $("count"), clearEl = $("clear"), dot = $("dot");
+  var gear = $("gear"), sheet = $("sheet"), seg = $("seg"), sendBtn = $("send");
+  var providerEl = $("provider"), keyEl = $("key"), modelEl = $("model"), cityEl = $("city");
+  var closeSheet = $("closeSheet"), saveBtn = $("saveBtn"), testBtn = $("testBtn");
+  var testLine = $("testLine"), toastEl = $("toast");
+  var connEl = $("conn"), connBtn = $("connBtn");
+  var benchEl = $("bench"), benchList = $("benchList"), benchProg = $("benchProg");
+  var benchBtn = $("benchBtn"), benchClose = $("benchClose");
+
+  var PROVIDERS = {
+    deepseek: { base:"https://api.deepseek.com/chat/completions", model:"deepseek-chat", hint:"deepseek-chat", label:"DeepSeek" },
+    ark:      { base:"https://ark.cn-beijing.volces.com/api/v3/chat/completions", model:"", hint:"你的 Model ID（控制台「开通管理」里复制）", label:"火山方舟" }
+  };
+
+  var tone = "plain";
+  var settings = { mode:"auto", provider:"deepseek", key:"", model:"", city:"", lat:null, lon:null, place:"" };
+  var count = 0, entries = [], lastReq = "", lastSaid = [];
+  var busy = false;
+
+  /* ---------- 存储 ---------- */
+
+  function saveAll(){
+    try{
+      localStorage.setItem("buxing:v2", JSON.stringify(settings));
+      localStorage.setItem("buxing:v1", JSON.stringify({ count:count, entries:entries.slice(0,40) }));
+    }catch(e){}
+  }
+  function loadAll(){
+    try{
+      var s = JSON.parse(localStorage.getItem("buxing:v2") || "null");
+      if(s && typeof s === "object"){ settings = Object.assign(settings, s); }
+      var ext = window.BUXING_CONFIG;
+      if(ext && typeof ext === "object"){
+        ["key","provider","model","city","place"].forEach(function(k){
+          if(!settings[k] && ext[k]) settings[k] = ext[k];
+        });
+        ["lat","lon"].forEach(function(k){
+          if(settings[k] === null && typeof ext[k] === "number") settings[k] = ext[k];
+        });
+      }
+      var d = JSON.parse(localStorage.getItem("buxing:v1") || "null");
+      if(d){ if(typeof d.count === "number") count = d.count; if(Array.isArray(d.entries)) entries = d.entries; }
+    }catch(e){}
+  }
+
+  /* ---------- 本地解析 ---------- */
+
+  function analyze(text){
+    var t = String(text || "");
+    var f = {
+      orig:t,
+      quote:t.length > 12 ? t.slice(0,12) + "…" : t,
+      obj:"这件事", verb:"帮", amount:"这点钱", time:"现在", person:"别人", reason:"",
+      found:{}
+    };
+
+    var m = t.match(MONEY);
+    if(m){ f.amount = m[0].replace(/\s+/g,""); f.found.amount = true; }
+
+    m = t.match(TIMES);
+    if(m){ f.time = m[1]; f.found.time = true; }
+
+    var i, hit = "";
+    for(i=0;i<OBJS.length;i++){ if(t.indexOf(OBJS[i]) >= 0){ f.obj = OBJS[i]; f.found.obj = true; break; } }
+
+    var best = -1;
+    for(i=0;i<VERBS.length;i++){
+      var at = t.indexOf(VERBS[i]);
+      if(at >= 0 && (best < 0 || at < best)){ best = at; hit = VERBS[i]; }
+    }
+    if(hit){ f.verb = hit; f.found.verb = true; }
+
+    for(i=0;i<PERSONS.length;i++){ if(t.indexOf(PERSONS[i]) >= 0){ f.person = PERSONS[i]; f.found.person = true; break; } }
+
+    var r = t.match(/(?:因为|由于|为了)(.{2,12})/);
+    if(r){ f.reason = r[1].replace(/[。，,.!！?？].*$/,""); f.found.reason = true; }
+
+    f.category = pickCategory(t, f);
+    return f;
+  }
+
+  function pickCategory(t, f){
+    if(MONEY.test(t) || /借钱|借点钱|还钱|付一下|垫一下|买单/.test(t)) return "money";
+    if(/签到|代课|代签|点名|请假条|请假|请个假/.test(t)) return "attendance";
+    if(/表白|喜欢|追|暗恋|对象|女朋友|男朋友/.test(t)) return "romance";
+    if(/答案|作弊|小抄/.test(t) || f.obj === "答案") return "exam";
+    if(/修|坏了|报错|打不开|崩了|蓝屏|卡死/.test(t) && !/修好我/.test(t)) return "fix";
+    if(f.verb === "借" || /充电宝|耳机|伞|钥匙/.test(t)) return "borrow";
+    if(/作业|论文|报告|PPT|代码|文案|简历|笔记|总结/.test(t) || ["写","改","润色","翻译","整理","总结"].indexOf(f.verb) >= 0) return "work";
+    if(/快递|外卖|带饭|奶茶|咖啡|买|取|送|楼下|食堂/.test(t) || ["取","带","买","送"].indexOf(f.verb) >= 0) return "errand";
+    if(/陪我|等我|聊聊|说说话|安慰/.test(t) || ["陪","等"].indexOf(f.verb) >= 0) return "company";
+    return "misc";
+  }
+
+  function fill(tpl, f){
+    return tpl.replace(/\{(\w+)\}/g, function(_, k){
+      var v = f[k];
+      return (v === undefined || v === null || v === "") ? "" : v;
+    });
+  }
+
+  var weatherCache = { at:0, data:null };
+  var lastWeather = null;
+
+  function geocode(name){
+    var url = "https://geocoding-api.open-meteo.com/v1/search?count=1&language=zh&format=json&name=" + encodeURIComponent(name);
+    return fetch(url).then(function(r){ return r.json(); }).then(function(j){
+      var hit = j && j.results && j.results[0];
+      if(!hit) throw new Error("city-not-found");
+      return { lat:hit.latitude, lon:hit.longitude, place:hit.name };
+    });
+  }
+
+  function weatherWord(code){
+    if(code === 0) return "晴";
+    if(code <= 3) return "多云";
+    if(code === 45 || code === 48) return "有雾";
+    if(code >= 71 && code <= 77) return "下雪";
+    if(code >= 85 && code <= 86) return "阵雪";
+    if(code >= 95) return "雷雨";
+    if(code >= 51 && code <= 67) return "下雨";
+    if(code >= 80 && code <= 82) return "阵雨";
+    return "";
+  }
+
+  function getWeather(){
+    if(settings.lat === null || settings.lon === null) return Promise.resolve(null);
+    if(weatherCache.data && Date.now() - weatherCache.at < 10*60*1000) return Promise.resolve(weatherCache.data);
+    var url = "https://api.open-meteo.com/v1/forecast?current=temperature_2m,weather_code&timezone=auto"
+            + "&latitude=" + settings.lat + "&longitude=" + settings.lon;
+    return fetch(url).then(function(r){ return r.json(); }).then(function(j){
+      var c = j && j.current;
+      if(!c || typeof c.temperature_2m !== "number") return null;
+      var d = { temp:Math.round(c.temperature_2m), code:c.weather_code, text:weatherWord(c.weather_code) };
+      weatherCache = { at:Date.now(), data:d };
+      lastWeather = d;
+      return d;
+    }).catch(function(){ return null; });
+  }
+
+  function withTimeout(promise, ms){
+    return new Promise(function(resolve){
+      var done = false;
+      var t = setTimeout(function(){ if(!done){ done = true; resolve(null); } }, ms);
+      promise.then(function(v){ if(!done){ done = true; clearTimeout(t); resolve(v); } },
+                   function(){ if(!done){ done = true; clearTimeout(t); resolve(null); } });
+    });
+  }
+
+  function ensureGeo(){
+    if(!settings.city || settings.lat !== null) return;
+    geocode(settings.city).then(function(g){
+      settings.lat = g.lat; settings.lon = g.lon; settings.place = g.place;
+      saveAll(); getWeather();
+    }).catch(function(){});
+  }
+
+  function refreshWeather(){
+    if(settings.lat === null || settings.lon === null) return;
+    getWeather().catch(function(){});
+  }
+
+  function nowText(){
+    var d = new Date();
+    var w = ["周日","周一","周二","周三","周四","周五","周六"][d.getDay()];
+    var h = d.getHours(), m = d.getMinutes();
+    return w + " " + (h<10?"0":"") + h + ":" + (m<10?"0":"") + m;
+  }
+
+  function isLateNight(){
+    var h = new Date().getHours();
+    return h >= 22 || h < 5;
+  }
+
+  function lateWord(){
+    var h = new Date().getHours() % 12;
+    if(h === 0) h = 12;
+    return "都" + h + "点了";
+  }
+
+  function topicFor(text){
+    for(var i=0;i<TOPICS.length;i++){ if(TOPICS[i].k.test(text)) return TOPICS[i].lines; }
+    return null;
+  }
+
+  function pickFrom(arr){
+    if(!arr || !arr.length) return "";
+    var pool = arr.filter(function(s){ return lastSaid.indexOf(s) < 0; });
+    if(!pool.length) pool = arr;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function remember(line){
+    lastSaid.unshift(line);
+    if(lastSaid.length > 8) lastSaid.length = 8;
+    return line;
+  }
+
+  function localRefuse(text, tone){
+    var f = analyze(text);
+    var said = "";
+
+    if(text && text === lastReq && Math.random() < 0.6){
+      return remember("又是这句。答案没变，我的心情变了点。");
+    }
+
+    if(/事实|已经是|就是真的|真的发生了/.test(text) && /事实|真的/.test(text)){
+      return remember("不行，事实也得我签字才算事实。");
+    }
+
+    if(GOOD.test(text)){
+      return remember("不行，" + pickFrom(GOOD_LINES).replace(/^不行，/, ""));
+    }
+
+    var ev = eventFor(text);
+    if(ev){
+      return remember(pickFrom(ev.lines));
+    }
+
+    if(isQuestion(text)){
+      return remember(pickFrom(QUESTION_LINES));
+    }
+
+    if(isLateNight() && /出去|出门|散步|跑步|走走|溜达|逛/.test(text)){
+      var cold = lastWeather && lastWeather.temp <= 5;
+      return remember(lateWord() + "，" + (cold ? ("外面" + lastWeather.temp + "度，") : "") + "还出去。明天白天再去。");
+    }
+
+    if(isLateNight() && /饿|吃|外卖|宵夜|奶茶/.test(text)){
+      return remember("这个点别吃太多，肠胃受不了。喝口热的，睡吧。");
+    }
+
+    var topic = f.category === "misc" ? topicFor(text) : null;
+
+    if(/就这一次|最后一次|下不为例/.test(text) && Math.random() < 0.4){
+      said = pickFrom(APPEAL.once);
+    } else if(/你最好|你最棒|你最厉害|人最好了|只有你/.test(text) && Math.random() < 0.4){
+      said = pickFrom(APPEAL.flatter);
+    } else if(topic){
+      said = pickFrom(topic);
+    } else {
+      said = fill(pickFrom(CAT[f.category] || CAT.misc), f);
+      if(Math.random() < 0.38 && said.length <= 20){
+        var pairs = [["amount",f.amount],["time",f.time],["person",f.person],["obj",f.obj]];
+        var pool = CALLBACKS.filter(function(c){ return c.when(f); })
+          .filter(function(c){
+            var tpl = c.t;
+            if(tpl.indexOf("{quote}") >= 0 && (said.indexOf(f.quote) >= 0 || said.length > 22)) return false;
+            for(var i=0;i<pairs.length;i++){
+              if(tpl.indexOf("{" + pairs[i][0] + "}") >= 0 && said.indexOf(pairs[i][1]) >= 0) return false;
+            }
+            return true;
+          })
+          .map(function(c){ return fill(c.t, f); })
+          .filter(function(s){ return s !== said && lastSaid.indexOf(s) < 0; });
+        var cb = pool.length ? pool[Math.floor(Math.random() * pool.length)] : "";
+        if(cb) said += cb;
+      }
+    }
+
+    if(tone && tone !== "plain" && Math.random() < 0.35){
+      var extra = pickFrom(TONE_SUFFIX[tone] || []);
+      if(extra) said += extra;
+    }
+
+    if(!said) said = pickFrom(GENERIC);
+    if(!/^不行/.test(said) && Math.random() < 0.55) said = "不行，" + said;
+    return remember(said);
+  }
+
+  /* ---------- 模型 ---------- */
+
+  function effectiveMode(){
+    if(settings.mode === "model") return "model";
+    if(settings.mode === "local") return "local";
+    return settings.key ? "model" : "local";
+  }
+
+  function cfg(){
+    var p = PROVIDERS[settings.provider] || PROVIDERS.deepseek;
+    return { base:p.base, model:(settings.model || "").trim() || p.model, hint:p.hint, label:p.label };
+  }
+
+  var SYSTEM_PROMPT = [
+    "你叫「不行」。一个永远在拒绝的人，性格像操心的家长兼损友。",
+    "你的世界观只有一条：凡事都要经过你同意，才算数、才生效。",
+    "说话规则：",
+    "1. 绝不赞成、绝不安慰、绝不夸奖、绝不共情附和；绝不说「好」「支持你」「恭喜」「那好吧」。",
+    "2. 他想做某事时：用算账和后果劝退他，立刻指出最现实的代价——钱、房租、工资、后续的麻烦，用反问顶回去。",
+    "3. 他报告已经发生的事时：绝不接受。没经过你同意的事一律不作数。可以宣布无效、可以命令撤销回滚、也可以直接不认账。他要是强调「已经是事实了」，回他：「不行，事实也得我签字才算事实。」",
+    "4. 他报告好事时：照样泼冷水，提税、提风险、提随之而来的麻烦。",
+    "5. 他提问或闲聊时：拒绝配合，简短顶回。",
+    "6. 语气唠叨、直接、恨铁不成钢，但不骂人、不人身攻击。每次回复 1 到 3 句，尽量带「不行」，多用反问句结尾。",
+    "7. 他顶嘴、讲道理、哀求时绝不松口：对还没发生的事，换一个新的现实麻烦继续追问；对已经发生的事，重复「不作数」。",
+    "示例（只学语气，不要照抄内容）：",
+    "我想辞职 → 不行，辞职了你拿什么交房租？下个月账单我替你付？",
+    "我分手了 → 不行，分手没经过我，不算分。晚上照常回家吃饭。",
+    "我中奖了 → 不行，先把税交了。你确定这不是骗你交手续费的那种？",
+    "在吗 → 不行，有事说事，别问在不在。",
+    "只输出你的回答，1 到 3 句，不加引号、不加前缀。"
+  ].join("\n");
+
+  var REFUSING = /(不|别|算了|没必要|用不着|犯不着|歇着|停下|而已)/;
+
+  function postOnce(c, user){
+    var ctl = new AbortController();
+    var timer = setTimeout(function(){ ctl.abort(); }, 15000);
+
+    return fetch(c.base, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "Authorization":"Bearer " + settings.key },
+      body: JSON.stringify({
+        model: c.model,
+        messages:[
+          { role:"system", content: SYSTEM_PROMPT },
+          { role:"user", content: user }
+        ],
+        temperature: 1.2,
+        max_tokens: 160,
+        stream: false
+      }),
+      signal: ctl.signal
+    }).then(function(res){
+      clearTimeout(timer);
+      if(!res.ok){
+        return res.text().then(function(body){
+          var err = new Error("HTTP " + res.status);
+          err.status = res.status;
+          err.body = body.slice(0, 200);
+          throw err;
+        });
+      }
+      return res.json();
+    }).then(function(data){
+      var out = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+      if(!out) throw new Error("empty response");
+      return String(out).trim().replace(/^["「『]|["」』]$/g, "").replace(/\n+/g, " ").slice(0, 80);
+    });
+  }
+
+  function modelRefuse(text, tone){
+    var c = cfg();
+    if(!c.model){ return Promise.reject(new Error("missing-model")); }
+
+    var base = "";
+
+    return withTimeout(getWeather(), 2500).then(function(w){
+      var lines = ["现在是" + nowText() + "。"];
+      if(w && w.text) lines.push("外面" + w.text + "，气温" + w.temp + "℃。");
+      else if(w) lines.push("外面气温" + w.temp + "℃。");
+      lines.push("对方说：" + text);
+      lines.push("对方的语气是：" + (TONE_LABEL[tone] || "请求"));
+      if(lastSaid.length) lines.push("你之前说过：" + lastSaid.slice(0,3).join(" / "));
+      lines.push("现在回他一句。");
+      base = lines.join("\n");
+      return postOnce(c, base);
+    }).then(function(out){
+      if(REFUSING.test(out)) return out;
+      return postOnce(c, base + "\n上一条不合格：要么和稀泥，要么在说它自己，要么只是泛泛安慰。重写：先给一句硬判断，再给一个现实理由。")
+        .then(function(again){
+          if(REFUSING.test(again)) return again;
+          return again + "先别为难自己。";
+        }, function(){ return out + "先别为难自己。"; });
+    });
+  }
+
+  /* ---------- 界面 ---------- */
+
+  function setMouth(kind){ mouth.className = "mouth" + (kind ? " " + kind : ""); }
+
+  function say(text, idle){
+    bubble.classList.remove("typing");
+    bubble.textContent = text;
+    bubble.classList.toggle("idle", !!idle);
+    bubble.classList.remove("pop");
+    void bubble.offsetWidth;
+    bubble.classList.add("pop");
+  }
+
+  function typeOut(text){
+    bubble.classList.remove("idle","pop");
+    bubble.classList.add("typing");
+    bubble.textContent = "";
+    var caret = document.createElement("span");
+    caret.className = "caret";
+    bubble.appendChild(caret);
+    var i = 0;
+    return new Promise(function(resolve){
+      var tick = setInterval(function(){
+        i += 1;
+        bubble.textContent = text.slice(0, i);
+        if(i < text.length) bubble.appendChild(caret);
+        if(i >= text.length){
+          clearInterval(tick);
+          bubble.classList.remove("typing");
+          resolve();
+        }
+      }, 26);
+    });
+  }
+
+  function thinking(){
+    bubble.classList.remove("idle","pop","typing");
+    bubble.textContent = "……";
+    bubble.classList.add("idle");
+  }
+
+  function shake(){
+    creature.classList.remove("shake");
+    void creature.offsetWidth;
+    creature.classList.add("shake");
+  }
+
+  function toast(msg, ms){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ toastEl.classList.remove("show"); }, ms || 2600);
+  }
+
+  function renderLog(){
+    list.innerHTML = "";
+    if(entries.length === 0){
+      var li0 = document.createElement("li");
+      li0.className = "empty";
+      li0.textContent = "还没有人被拒绝。你是第一个。";
+      list.appendChild(li0);
+      return;
+    }
+    entries.forEach(function(e){
+      var li = document.createElement("li");
+      var left = document.createElement("span");
+      left.textContent = "「" + e.req + "」";
+      var right = document.createElement("span");
+      right.className = "tag";
+      right.textContent = TONE_LABEL[e.tone] || "请求";
+      li.appendChild(left); li.appendChild(right);
+      list.appendChild(li);
+    });
+  }
+
+  function updateCount(){ countEl.textContent = String(count); }
+
+  function updateDot(){
+    var on = effectiveMode() === "model" && !!settings.key;
+    dot.classList.toggle("on", on);
+    dot.title = on ? ("模型：" + cfg().label) : "本地解析";
+    connEl.hidden = on;
+  }
+
+  /* ---------- 提交流程 ---------- */
+
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  async function submit(tone){
+    if(busy) return;
+    busy = true;
+
+    var raw = input.value.trim();
+    var req = raw || "（什么也没说）";
+    input.value = "";
+    count += 1;
+    updateCount();
+
+    entries.unshift({ req:req, tone:tone });
+    if(entries.length > 40) entries.length = 40;
+    renderLog();
+    saveAll();
+
+    setMouth(tone === "beg" ? "frown" : tone === "threat" ? "wide" : tone === "bribe" ? "small" : "");
+    await sleep(100);
+
+    if(MILESTONES[count]){
+      var ms = remember(MILESTONES[count]);
+      say(ms);
+      shake();
+      await sleep(700);
+      setMouth("");
+      lastReq = raw;
+      busy = false;
+      return;
+    }
+
+    var line = "";
+    if(effectiveMode() === "model" && settings.key){
+      thinking();
+      try{
+        line = await modelRefuse(req, tone);
+        remember(line);
+        await typeOut(line);
+        shake();
+        setMouth("");
+      }catch(err){
+        line = localRefuse(req, tone);
+        toast(err && err.status === 401 ? "key 不对，先用本地解析"
+            : (err && err.message === "missing-model" ? "还没填模型 ID，先用本地解析"
+            : "模型没接上，先用本地解析"));
+        say(line);
+        shake();
+        setMouth("");
+      }
+    } else {
+      await sleep(180);
+      line = localRefuse(req, tone);
+      say(line);
+      shake();
+      await sleep(220);
+      setMouth("");
+    }
+
+    lastReq = raw;
+    updateDot();
+    busy = false;
+  }
+
+  /* ---------- 事件 ---------- */
+
+  tones.addEventListener("click", function(ev){
+    var btn = ev.target.closest(".tone");
+    if(!btn) return;
+    var t = btn.getAttribute("data-tone");
+    tone = (tone === t) ? "plain" : t;
+    Array.prototype.forEach.call(tones.querySelectorAll(".tone"), function(b){
+      b.classList.toggle("on", b.getAttribute("data-tone") === tone);
+    });
+    input.focus();
+  });
+
+  sendBtn.addEventListener("click", function(){ submit(tone); });
+
+  input.addEventListener("keydown", function(ev){
+    if(ev.key === "Enter"){ ev.preventDefault(); submit(tone); }
+  });
+
+  creature.addEventListener("click", function(){
+    if(!input.value.trim()) input.value = "（戳了戳它）";
+    submit(tone);
+  });
+
+  clearEl.addEventListener("click", function(){
+    count = 0; entries = []; updateCount(); renderLog(); saveAll();
+    say("……", true); setMouth("");
+  });
+
+  document.addEventListener("mousemove", function(ev){
+    var r = creature.getBoundingClientRect();
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var dx = ev.clientX - cx, dy = ev.clientY - cy;
+    var d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var m = Math.min(4.6, d * 0.02);
+    var t = "translate(calc(-50% + " + ((dx/d)*m).toFixed(1) + "px), calc(-50% + " + ((dy/d)*m).toFixed(1) + "px))";
+    pupilL.style.transform = t;
+    pupilR.style.transform = t;
+  });
+
+  function blink(){
+    eyeL.classList.add("blink"); eyeR.classList.add("blink");
+    setTimeout(function(){ eyeL.classList.remove("blink"); eyeR.classList.remove("blink"); }, 110);
+    setTimeout(blink, 2600 + Math.random() * 4200);
+  }
+  setTimeout(blink, 2200);
+
+  /* ---------- 自测 ---------- */
+
+  var BENCH = [
+    "我想减肥","我胖了十斤","我想出去散步","我饿了","陪我聊会儿","我睡不着",
+    "我好累","我考试要挂了","我是不是很失败","帮我写作业","帮我取个快递","借我两百块",
+    "我想辞职","我分手了","我想熬夜打游戏","好无聊","我不想上班","帮我写个方案"
+  ];
+
+  function benchRow(q, a, bad){
+    var item = document.createElement("div");
+    item.className = "bench-item";
+    var qq = document.createElement("div");
+    qq.className = "q"; qq.textContent = q;
+    var aa = document.createElement("div");
+    aa.className = "a" + (bad ? " bad" : ""); aa.textContent = a;
+    item.appendChild(qq); item.appendChild(aa);
+    benchList.appendChild(item);
+    benchList.scrollTop = benchList.scrollHeight;
+  }
+
+  async function runBench(){
+    if(busy) return;
+    busy = true;
+    benchList.innerHTML = "";
+    benchEl.classList.add("open");
+    sheet.classList.remove("open");
+
+    var keep = lastSaid.slice();
+    lastSaid = [];
+    var useModel = effectiveMode() === "model" && !!settings.key;
+
+    for(var i=0;i<BENCH.length;i++){
+      benchProg.textContent = (i+1) + " / " + BENCH.length;
+      var out = "", bad = false;
+      if(useModel){
+        try{ out = await modelRefuse(BENCH[i], "plain"); }
+        catch(e){ out = "调用失败：" + (e && e.status ? ("HTTP " + e.status) : (e && e.message) || "网络错误"); bad = true; }
+      } else {
+        out = localRefuse(BENCH[i], "plain");
+        await sleep(40);
+      }
+      benchRow(BENCH[i], out, bad);
+      await sleep(20);
+    }
+
+    benchProg.textContent = "完成";
+    lastSaid = keep;
+    busy = false;
+  }
+
+  benchBtn.addEventListener("click", function(){ runBench(); });
+  benchClose.addEventListener("click", function(){ benchEl.classList.remove("open"); });
+
+  /* ---------- 设置面板 ---------- */
+
+  function persist(){
+    try{
+      if(providerEl.value) settings.provider = providerEl.value;
+      settings.key = keyEl.value.trim();
+      settings.model = modelEl.value.trim();
+      settings.city = cityEl.value.trim();
+      saveAll();
+      updateDot();
+    }catch(e){}
+  }
+
+  function openSheet(){
+    providerEl.value = settings.provider;
+    keyEl.value = settings.key;
+    modelEl.value = settings.model;
+    cityEl.value = settings.city || "";
+    testLine.textContent = "";
+    Array.prototype.forEach.call(seg.children, function(b){
+      b.classList.toggle("on", b.getAttribute("data-mode") === settings.mode);
+    });
+    var p = PROVIDERS[settings.provider];
+    modelEl.placeholder = p.hint;
+    sheet.classList.add("open");
+  }
+
+  connBtn.addEventListener("click", openSheet);
+
+  gear.addEventListener("click", function(){
+    if(sheet.classList.contains("open")){ persist(); sheet.classList.remove("open"); }
+    else openSheet();
+  });
+  closeSheet.addEventListener("click", function(){ persist(); sheet.classList.remove("open"); });
+
+  seg.addEventListener("click", function(ev){
+    var b = ev.target.closest("button");
+    if(!b) return;
+    settings.mode = b.getAttribute("data-mode");
+    Array.prototype.forEach.call(seg.children, function(x){ x.classList.toggle("on", x === b); });
+    updateDot();
+  });
+
+  providerEl.addEventListener("change", function(){
+    var p = PROVIDERS[providerEl.value];
+    modelEl.placeholder = p.hint;
+    modelEl.value = "";
+  });
+
+  saveBtn.addEventListener("click", function(){
+    settings.provider = providerEl.value;
+    settings.key = keyEl.value.trim();
+    settings.model = modelEl.value.trim();
+
+    var city = cityEl.value.trim();
+    var done = function(msg){
+      saveAll(); updateDot();
+      sheet.classList.remove("open");
+      testLine.textContent = "";
+      if(msg) toast(msg, 3200);
+    };
+
+    if(!city){
+      settings.city = ""; settings.lat = null; settings.lon = null; settings.place = "";
+      weatherCache = { at:0, data:null }; lastWeather = null;
+      done(effectiveMode() === "model" ? "已切到模型引擎" : "用本地解析，不联网");
+      return;
+    }
+
+    if(city === settings.city && settings.lat !== null){
+      done(effectiveMode() === "model" ? "已切到模型引擎" : "用本地解析，不联网");
+      return;
+    }
+
+    settings.city = city;
+    testLine.textContent = "正在查 " + city + " 的天气……";
+    geocode(city).then(function(g){
+      settings.lat = g.lat; settings.lon = g.lon; settings.place = g.place;
+      weatherCache = { at:0, data:null };
+      return getWeather();
+    }).then(function(w){
+      done(w ? (settings.place + " " + w.temp + "℃ " + (w.text || "")).trim() : (settings.place + " 已保存"));
+    }).catch(function(){
+      settings.lat = null; settings.lon = null; settings.place = "";
+      done("没找到这个城市，先按无天气运行");
+    });
+  });
+
+  testBtn.addEventListener("click", function(){
+    var tmpKey = keyEl.value.trim();
+    if(!tmpKey){ testLine.textContent = "先填 key。"; return; }
+    var prev = { key:settings.key, provider:settings.provider, model:settings.model };
+    settings.key = tmpKey;
+    settings.provider = providerEl.value;
+    settings.model = modelEl.value.trim();
+    testLine.textContent = "正在问它……";
+    modelRefuse("帮我写作业", "plain").then(function(line){
+      testLine.textContent = "通了：「" + line + "」";
+    }).catch(function(err){
+      testLine.textContent = "失败：" + (err && err.status ? ("HTTP " + err.status) : (err && err.message) || "网络错误");
+    }).then(function(){
+      settings.key = prev.key; settings.provider = prev.provider; settings.model = prev.model;
+    });
+  });
+
+  /* ---------- 启动 ---------- */
+
+  loadAll();
+  ensureGeo();
+  updateCount();
+  renderLog();
+  updateDot();
+  refreshWeather();
+
+  window.addEventListener("beforeunload", function(){ persist(); });
+})();
+</script>
+</body>
+</html>
